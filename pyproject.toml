@@ -1,0 +1,21 @@
+[project]
+name = "example-data-access-request-actions"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "acryl-datahub-actions",
+    "requests",
+]
+
+[[project.authors]]
+name = "Michael Maltese"
+email = "michael.maltese@datahub.com"
+
+[project.entry-points."datahub_actions.action.plugins"]
+create_external_access_request_action = "create_external_access_request_action:CreateExternalAccessRequestAction"
+grant_external_permissions_action = "grant_external_permissions_action:GrantExternalPermissionsAction"
+simple_action = "simple_action:SimpleAction"
+
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,24 @@
+name: simple-pipeline
+
+datahub:
+  server: "https://<instance-name>.acryl.io"
+  token: "<personal access token>"
+
+source:
+  type: "datahub-cloud"
+
+filter:
+    event_type: "EntityChangeEvent_v1"
+    event:
+        entityType: "actionRequest"
+        parameters:
+            actionRequestType: "WORKFLOW_FORM_REQUEST"
+            workflowId: "<workflow-id>"
+
+options:
+  failure_mode: "THROW"
+
+action:
+  type: grant_external_permissions_action
+  config:
+    external_uri: http://localhost:8000/grant_permissions
