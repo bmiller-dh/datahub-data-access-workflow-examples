@@ -1,6 +1,28 @@
+# Secrets and env
+.env
+.env.local
+.env.*.local
+
+# Python
 *.pyc
+__pycache__/
 *.egg-info
-*.swp
-.ruff_cache/
-extra/
+*.egg
+.eggs/
 venv/
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Build / install
+dist/
+build/
+
+# Editor / OS
+*.swp
+.DS_Store
+.idea/
+.vscode/
+
+# Project
+extra/

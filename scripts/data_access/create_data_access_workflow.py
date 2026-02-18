@@ -1,10 +1,18 @@
 import argparse
+import os
 import sys
 
 from datahub.ingestion.graph.client import DatahubClientConfig, DataHubGraph
 
-DATAHUB_URL = "https://<instance-name>.acryl.io"
-DATAHUB_TOKEN = "<personal access token>"
+
+def _get_config():
+    url = os.environ.get("DATAHUB_URL")
+    token = os.environ.get("DATAHUB_TOKEN")
+    if not url or not token:
+        missing = [k for k, v in [("DATAHUB_URL", url), ("DATAHUB_TOKEN", token)] if not v]
+        print(f"Error: Set environment variables: {', '.join(missing)}", file=sys.stderr)
+        sys.exit(1)
+    return url, token
 
 CREATE_WORKFLOW_MUTATION = """
 mutation upsertActionWorkflow($input: UpsertActionWorkflowInput!) {
@@ -20,11 +28,13 @@ def main():
     parser = argparse.ArgumentParser(prog=sys.argv[0])
     parser.parse_args(sys.argv[1:])
 
+    datahub_url, datahub_token = _get_config()
+
     # Initialize DataHub client
     datahub_client = DataHubGraph(
         DatahubClientConfig(
-            server=DATAHUB_URL,
-            token=DATAHUB_TOKEN,
+            server=datahub_url,
+            token=datahub_token,
         )
     )
 
@@ -111,9 +121,8 @@ def main():
             }
         },
     )
-    print(result)
-    print(f"Workflow created successfully: {result['upsertActionWorkflow']['urn']}")
-    print(f"Workflow name: {result['upsertActionWorkflow']['name']}")
+    urn = result["upsertActionWorkflow"]["urn"]
+    print(f"Workflow created successfully: {urn}")
 
 
 if __name__ == "__main__":

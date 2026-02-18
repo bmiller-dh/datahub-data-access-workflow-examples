@@ -1,8 +1,8 @@
 name: simple-pipeline
 
 datahub:
-  server: "https://<instance-name>.acryl.io"
-  token: "<personal access token>"
+  server: "${DATAHUB_URL}"
+  token: "${DATAHUB_TOKEN}"
 
 source:
   type: "datahub-cloud"
@@ -13,7 +13,7 @@ filter:
         entityType: "actionRequest"
         parameters:
             actionRequestType: "WORKFLOW_FORM_REQUEST"
-            workflowId: "<workflow-id>"
+            workflowId: "d4b1fee1-e3e3-44e4-90ce-f947f8f76594"
 
 options:
   failure_mode: "THROW"

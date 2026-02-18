@@ -12,9 +12,12 @@ name = "Michael Maltese"
 email = "michael.maltese@datahub.com"
 
 [project.entry-points."datahub_actions.action.plugins"]
-create_external_access_request_action = "create_external_access_request_action:CreateExternalAccessRequestAction"
-grant_external_permissions_action = "grant_external_permissions_action:GrantExternalPermissionsAction"
+create_external_access_request_action = "create_external_access_request_action:CreateExternalAccessRequest"
+grant_external_permissions_action = "grant_external_permissions_action:GrantExternalPermissions"
 simple_action = "simple_action:SimpleAction"
+metadata_proposal_action = "metadata_proposal_action:MetadataProposalAction"
+glossary_proposal_action = "glossary_proposal_action:GlossaryProposalAction"
+certification_event_action = "certification_event_action:CertificationEventAction"
 
 [build-system]
 requires = ["setuptools >= 77.0.3"]

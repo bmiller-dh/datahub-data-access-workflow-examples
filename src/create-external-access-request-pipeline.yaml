@@ -1,8 +1,8 @@
 name: simple-pipeline
 
 datahub:
-  server: "https://<instance-name>.acryl.io"
-  token: "<personal access token>"
+  server: "${DATAHUB_URL}"
+  token: "${DATAHUB_TOKEN}"
 
 source:
   type: "datahub-cloud"
