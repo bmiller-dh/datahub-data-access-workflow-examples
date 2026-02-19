@@ -17,6 +17,7 @@ app = Flask(__name__)
 RECENT_GRANTS = deque(maxlen=50)
 RECENT_METADATA_PROPOSALS = deque(maxlen=50)
 RECENT_GLOSSARY_PROPOSALS = deque(maxlen=50)
+RECENT_CERTIFICATION_EVENTS = deque(maxlen=50)
 
 DATAHUB_URL = os.environ.get("DATAHUB_URL", "").rstrip("/")
 DATAHUB_TOKEN = os.environ.get("DATAHUB_TOKEN", "")
@@ -111,7 +112,7 @@ def api_pending():
 
 @app.route("/api/review", methods=["POST"])
 def api_review():
-    """Approve or deny a request. Body: { requestUrn, result: "ACCEPTED"|"REJECTED", comment? }"""
+    """Approve or deny a Data Access Request. Body: { requestUrn, result: "ACCEPTED"|"REJECTED", comment? }"""
     body = request.get_json(force=True, silent=True) or {}
     urn = body.get("requestUrn") or body.get("request_urn")
     result = body.get("result", "").upper()
@@ -153,10 +154,27 @@ def metadata_proposals():
 
 @app.route("/glossary_proposals", methods=["POST"])
 def glossary_proposals():
-    """Receive glossary proposal events from glossary-proposal-pipeline."""
+    """Receive glossary proposal events from glossary-proposal-pipeline. Shown in Recent glossary proposals; approve/deny in DataHub."""
     data = request.get_json(force=True, silent=True) or {}
     RECENT_GLOSSARY_PROPOSALS.append(data)
     print("[mock-server] POST /glossary_proposals received:", data.get("actionRequestType"), data.get("entityUrn"), flush=True)
+    return jsonify({"status": "ok", "received": True})
+
+
+@app.route("/api/certification_events", methods=["GET"])
+def api_certification_events():
+    """Recent certification (structured property) events from certification-event-pipeline."""
+    return jsonify({"events": list(RECENT_CERTIFICATION_EVENTS)})
+
+
+@app.route("/certification_events", methods=["GET", "POST"])
+def certification_events():
+    """Receive certification events from certification-event-pipeline (POST). GET returns recent events."""
+    if request.method == "GET":
+        return jsonify({"events": list(RECENT_CERTIFICATION_EVENTS), "message": "View the dashboard at http://localhost:8000/ for the full UI."})
+    data = request.get_json(force=True, silent=True) or {}
+    RECENT_CERTIFICATION_EVENTS.append(data)
+    print("[mock-server] POST /certification_events received:", data.get("entityUrn"), data.get("operation"), flush=True)
     return jsonify({"status": "ok", "received": True})
 
 
@@ -213,6 +231,7 @@ def _dashboard_html():
 
   <div class="activity">
     <h2>Recent approvals received (from pipeline)</h2>
+    <p class="empty" style="margin-top: 0; font-size: 0.9em;">Data Access Request approvals only. Run <code>datahub actions -c src/grant-external-permissions-pipeline.yaml</code> and approve a &quot;Request Access&quot; (dataset) request—not task-center proposals.</p>
     <ul id="activity"></ul>
   </div>
   <div class="activity">
@@ -221,7 +240,13 @@ def _dashboard_html():
   </div>
   <div class="activity">
     <h2>Recent glossary proposals</h2>
+    <p class="empty" style="margin-top: 0; font-size: 0.9em;">Notifications only. Approve or deny glossary term proposals in DataHub.</p>
     <ul id="glossary-proposals"></ul>
+  </div>
+  <div class="activity">
+    <h2>Recent certification events</h2>
+    <p class="empty" style="margin-top: 0; font-size: 0.9em;">Scroll here if needed. Trigger: set a structured property on an asset in DataHub (e.g. complete a Compliance Form). Pipeline must be running.</p>
+    <ul id="certification-events"></ul>
   </div>
 
   <script>
@@ -303,8 +328,9 @@ def _dashboard_html():
     loadActivity();
     loadProposals('/api/metadata_proposals', 'metadata-proposals', 'None yet. Run metadata-proposal-pipeline and create a metadata proposal in DataHub.');
     loadProposals('/api/glossary_proposals', 'glossary-proposals', 'None yet. Run glossary-proposal-pipeline and create a glossary proposal in DataHub.');
+    loadProposals('/api/certification_events', 'certification-events', 'None yet. Run certification-event-pipeline and set a structured property (e.g. via Compliance Form).');
     setInterval(loadActivity, 5000);
-    setInterval(() => {{ loadProposals('/api/metadata_proposals', 'metadata-proposals', 'None yet.'); loadProposals('/api/glossary_proposals', 'glossary-proposals', 'None yet.'); }}, 5000);
+    setInterval(() => {{ loadProposals('/api/metadata_proposals', 'metadata-proposals', 'None yet.'); loadProposals('/api/glossary_proposals', 'glossary-proposals', 'None yet.'); loadProposals('/api/certification_events', 'certification-events', 'None yet.'); }}, 5000);
   </script>
 </body>
 </html>"""
