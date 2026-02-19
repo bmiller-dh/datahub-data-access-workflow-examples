@@ -9,6 +9,18 @@ This repo contains examples for using [DataHub Data Access Workflows](https://do
 
 Scripts and action pipelines use **environment variables** for the DataHub URL and token (no secrets in repo).
 
+## Requirements and dependencies
+
+To run the scripts and action pipelines (and optionally the mock server), you need:
+
+| Requirement | Purpose |
+|-------------|---------|
+| **Python 3.10+** | Scripts and DataHub Actions CLI; install via [python.org](https://www.python.org/) or your OS package manager. |
+| **pip** | Install the project and dependencies; use a virtual environment (`python3 -m venv venv`). |
+| **Project packages** | Install with `pip install -e .` (see [Dependencies](#dependencies)). Includes `acryl-datahub-actions` and `requests`. |
+| **Docker** | Optional. Only needed to run the mock server with the web UI; build and run the image from `mock-server/`. |
+| **DataHub instance** | A DataHub deployment (e.g. [DataHub Cloud](https://www.datahubproject.io/)) and a [Personal Access Token](https://docs.datahub.com/docs/authentication/personal-access-tokens). |
+
 1. Copy the example env file and set your values:
    ```sh
    cp .env.example .env
