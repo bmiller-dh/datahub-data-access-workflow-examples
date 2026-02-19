@@ -8,6 +8,7 @@ in DataHub first (Govern > Settings > Structured Properties), then pass the URN 
 Usage:
   export DATAHUB_URL DATAHUB_TOKEN
   python scripts/certification/create_asset_certification_form.py --form-id asset-cert-2024 --property-urn "urn:li:structuredProperty:certificationStatus"
+  python scripts/certification/create_asset_certification_form.py --form-id asset-cert-2024 --property-urn "certificationStatus"
 """
 import argparse
 import os
@@ -34,6 +35,16 @@ def _get_config():
     return url, token
 
 
+def _normalize_property_urn(value: str) -> str:
+    """Accept full URN (urn:li:structuredProperty:...) or just the property id; return full URN."""
+    if not value or not value.strip():
+        return value
+    s = value.strip()
+    if s.startswith("urn:li:structuredProperty:"):
+        return s
+    return f"urn:li:structuredProperty:{s}"
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Create a VERIFICATION Compliance Form for asset certification."
@@ -46,7 +57,7 @@ def main():
     parser.add_argument(
         "--property-urn",
         required=True,
-        help='Structured property URN (e.g. urn:li:structuredProperty:certificationStatus)',
+        help='Structured property URN or id (e.g. urn:li:structuredProperty:certificationStatus or certificationStatus)',
     )
     parser.add_argument(
         "--name",
@@ -66,6 +77,7 @@ def main():
         help="User URN to assign (e.g. urn:li:corpuser:jane). Can be repeated.",
     )
     args = parser.parse_args()
+    property_urn = _normalize_property_urn(args.property_urn)
 
     datahub_url, datahub_token = _get_config()
     client = DataHubGraph(
@@ -87,7 +99,7 @@ def main():
                         "description": "Apply certification structured property to the asset",
                         "type": "STRUCTURED_PROPERTY",
                         "structuredPropertyParams": {
-                            "urn": args.property_urn,
+                            "urn": property_urn,
                         },
                     }
                 ],

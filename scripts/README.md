@@ -18,5 +18,7 @@ set -a && source .env && set +a
 python scripts/data_access/create_data_access_workflow.py
 python scripts/data_access/list_pending_data_access_requests.py --mine --status PENDING
 python scripts/data_access/review_data_access_request.py --request-urn <URN> --result ACCEPTED
-python scripts/certification/create_asset_certification_form.py --form-id asset-cert-2024 --property-urn "urn:li:structuredProperty:..."
+python scripts/certification/create_asset_certification_form.py --form-id asset-cert-2024 --property-urn "urn:li:structuredProperty:..."   # or --property-urn "propertyId"
 ```
+
+Run from the **repo root** so the script path resolves correctly; or from `scripts/certification` run `python create_asset_certification_form.py ...`.
