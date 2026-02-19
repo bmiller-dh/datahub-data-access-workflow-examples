@@ -5,6 +5,29 @@ This repo contains examples for using [DataHub Data Access Workflows](https://do
 
 ---
 
+# Configuration
+
+Scripts and action pipelines use **environment variables** for the DataHub URL and token (no secrets in repo).
+
+1. Copy the example env file and set your values:
+   ```sh
+   cp .env.example .env
+   # Edit .env: set DATAHUB_URL and DATAHUB_TOKEN
+   ```
+2. Load the variables before running (e.g. in your shell or via `source .env` if your shell supports it):
+   ```sh
+   export DATAHUB_URL=https://<instance-name>.acryl.io
+   export DATAHUB_TOKEN=<personal access token>
+   ```
+   For a `.env` file, you can use `set -a && source .env && set +a` (bash/zsh) or a tool like [direnv](https://direnv.net/). Do not commit `.env`.
+
+Required variables:
+
+- **DATAHUB_URL** – DataHub instance URL (e.g. `https://<instance-name>.acryl.io`)
+- **DATAHUB_TOKEN** – [Personal Access Token](https://docs.datahub.com/docs/authentication/personal-access-tokens)
+
+---
+
 # Step-by-step: Data Access Request → Approve → Grant (e.g. mock server)
 
 End-to-end flow: create a workflow, run the grant pipeline, list your pending requests, approve one, and see the approval event hit an external endpoint (mock server).
@@ -169,27 +192,6 @@ datahub actions -c src/glossary-proposal-pipeline.yaml
 ```sh
 pip install -e .
 ```
-
-# Configuration
-
-Scripts and action pipelines use **environment variables** for the DataHub URL and token (no secrets in repo).
-
-1. Copy the example env file and set your values:
-   ```sh
-   cp .env.example .env
-   # Edit .env: set DATAHUB_URL and DATAHUB_TOKEN
-   ```
-2. Load the variables before running (e.g. in your shell or via `source .env` if your shell supports it):
-   ```sh
-   export DATAHUB_URL=https://<instance-name>.acryl.io
-   export DATAHUB_TOKEN=<personal access token>
-   ```
-   For a `.env` file, you can use `set -a && source .env && set +a` (bash/zsh) or a tool like [direnv](https://direnv.net/). Do not commit `.env`.
-
-Required variables:
-
-- **DATAHUB_URL** – DataHub instance URL (e.g. `https://<instance-name>.acryl.io`)
-- **DATAHUB_TOKEN** – [Personal Access Token](https://docs.datahub.com/docs/authentication/personal-access-tokens)
 
 ## Creating a DataHub Data Access Workflow
 
