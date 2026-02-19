@@ -2,6 +2,7 @@ This repo contains examples for using [DataHub Data Access Workflows](https://do
 
 - **[Configuration](#configuration)** – Requirements, env vars, and [Quick start](#quick-start-mock-server--all-four-pipelines) to run the mock server and all four pipelines.
 - **[Step-by-step guide](#step-by-step-data-access-request--approve--grant-eg-mock-server)** – Data Access Request → list pending → approve → grant pipeline → mock server (full flow).
+- **[Creating](#creating-a-data-access-workflow) and [deleting](#deleting-data-access-workflows) Data Access Workflows** – Scripts to create (upsert) or list/delete workflow definitions.
 - **See [WORKFLOWS.md](WORKFLOWS.md)** for how to implement: (1) Data Product Access Requests, (2) Asset Certification, (3) Metadata Approval (Proposal Workflows), and (4) Glossary Approval using what’s built here.
 
 ---
@@ -19,7 +20,7 @@ To run the scripts and action pipelines (and optionally the mock server), you ne
 | **Python 3.10+** | Scripts and DataHub Actions CLI; install via [python.org](https://www.python.org/) or your OS package manager. |
 | **pip** | Install the project and dependencies; use a virtual environment (`python3 -m venv venv`). |
 | **Project packages** | Install with `pip install -e .` (see [Dependencies](#dependencies)). Includes `acryl-datahub-actions` and `requests`. |
-| **Docker** | Optional. Only needed to run the mock server with the web UI; build and run the image from `mock-server/`. |
+| **Docker** | Optional. Quick start uses Docker for the mock server if available; otherwise it runs the mock server with Python (`mock-server/requirements.txt`). |
 | **DataHub instance** | A DataHub deployment (e.g. [DataHub Cloud](https://www.datahubproject.io/)) and a [Personal Access Token](https://docs.datahub.com/docs/authentication/personal-access-tokens). |
 
 1. Copy the example env file and set your values:
@@ -50,7 +51,7 @@ After [Configuration](#configuration) is set up (`pip install -e .`, `.env` with
 This script:
 
 - **Ensures the Data Access Workflow exists** and updates `workflowId` in `src/grant-external-permissions-pipeline.yaml` (runs `create_data_access_workflow.py`; idempotent).
-- Builds and runs the **mock server** in Docker at http://localhost:8000 (if Docker is installed).
+- Builds and runs the **mock server** at http://localhost:8000 (uses Docker if available, otherwise starts it with Python from `mock-server/`).
 - Starts the **grant-external-permissions**, **certification-event**, **metadata-proposal**, and **glossary-proposal** pipelines in the background.
 
 Press **Ctrl+C** to stop all pipelines and the mock server. If the workflow step fails (e.g. no network), run [Step 2](#step-2--create-the-data-access-workflow-once-per-instance) manually and set `workflowId` in the pipeline YAML.
@@ -224,17 +225,39 @@ datahub actions -c src/glossary-proposal-pipeline.yaml
 pip install -e .
 ```
 
-## Creating a DataHub Data Access Workflow
+## Creating a Data Access Workflow
 
-The script `scripts/data_access/create_data_access_workflow.py` will create an example Data Access Workflow.
+The script **`scripts/data_access/create_data_access_workflow.py`** creates a Data Access Workflow in your DataHub instance using the GraphQL `upsertActionWorkflow` mutation. The workflow defines how users request access to datasets (e.g. from the dataset profile or home page) and how approvals are routed.
 
-Set `DATAHUB_URL` and `DATAHUB_TOKEN` (see [Configuration](#configuration)), then run:
+**When to use it**
+
+- **First-time setup** – You need at least one Data Access Workflow for the grant, simple, and create-external-access-request pipelines to receive events.
+- **Quick start** – [Quick start](#quick-start-mock-server--all-four-pipelines) runs this script for you and updates `workflowId` in `src/grant-external-permissions-pipeline.yaml`. You only need to run the script manually if you are not using quick start or if you want a fresh workflow.
+
+**Prerequisites**
+
+- `DATAHUB_URL` and `DATAHUB_TOKEN` set (see [Configuration](#configuration)).
+- A token with permission to create/manage workflows (e.g. platform admin or “Manage Workflows”).
+
+**Command**
 
 ```sh
+# From repo root, with .env loaded (e.g. set -a && source .env && set +a)
 python scripts/data_access/create_data_access_workflow.py
 ```
 
-You should now be able to see your Data Access Workflow and make a Data Access Request by going to any Dataset page and clicking the "unlock" icon on the top right of the main entity header (next to the "View in {platform}" button).
+**What it creates**
+
+- A workflow named **“External Auth Data Access Workflow”** (category `ACCESS`) with:
+  - A form (business justification, access duration, optional permanent-access justification).
+  - Entry points: Home page (“Request Dataset Access”) and entity profile (“Request Access”).
+  - One approval step assigned to entity owners.
+- The script prints the workflow URN, e.g. `urn:li:actionWorkflow:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`.
+
+**After creating**
+
+- In DataHub, open any **Dataset** and use the **“Request Access”** (unlock) action to submit a request.
+- For the **grant-external-permissions** (and other) pipelines to receive events, set `filter.event.parameters.workflowId` in the pipeline YAML to the **UUID part** of that URN (e.g. `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Quick start does this automatically for the grant pipeline.
 
 
 # Examples
@@ -298,6 +321,46 @@ Then approve or reject:
 python scripts/data_access/review_data_access_request.py --request-urn <request_urn> --result ACCEPTED --comment "Approved"
 # or --result REJECTED
 ```
+
+### Deleting Data Access Workflows
+
+The script **`scripts/data_access/delete_data_access_workflows.py`** lists and deletes Data Access Workflow **definitions** in DataHub. It uses the GraphQL `deleteActionWorkflow` mutation. Use it to remove duplicate or unwanted workflows (e.g. after running the create script or quick start multiple times).
+
+**What deletion does**
+
+- **Removes the workflow definition** – New requests can no longer be created with that workflow.
+- **Does not remove existing requests** – Requests that were already submitted from that workflow remain in DataHub (pending or completed); you can still list and approve/reject them with `list_pending_data_access_requests.py` and `review_data_access_request.py`.
+
+**Prerequisites**
+
+- `DATAHUB_URL` and `DATAHUB_TOKEN` set (see [Configuration](#configuration)).
+- A token with permission to manage workflows (e.g. “Manage Workflows”).
+
+**List workflows (no delete)**
+
+```sh
+python scripts/data_access/delete_data_access_workflows.py --list-only
+```
+
+Prints each workflow URN, name, and category. Use this to confirm which workflows exist before deleting.
+
+**Delete workflows**
+
+- **Delete all workflows** returned by the list (same as listing then deleting every one):
+
+  ```sh
+  python scripts/data_access/delete_data_access_workflows.py --delete-all
+  ```
+
+- **Delete one or more by URN** (copy URNs from `--list-only` or from the DataHub UI):
+
+  ```sh
+  python scripts/data_access/delete_data_access_workflows.py --urn "urn:li:actionWorkflow:<uuid1>" --urn "urn:li:actionWorkflow:<uuid2>"
+  ```
+
+**After deleting**
+
+- To have a single workflow again (and to wire the grant pipeline), run **`create_data_access_workflow.py`** once, or run **`./quick_start.sh`**, which creates the workflow and updates `workflowId` in `src/grant-external-permissions-pipeline.yaml`.
 
 ## Other pipelines (see [WORKFLOWS.md](WORKFLOWS.md))
 

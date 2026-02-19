@@ -43,8 +43,8 @@ def main():
         CREATE_WORKFLOW_MUTATION,
         {
             "input": {
-                "name": "Dataset Access Request",
-                "description": "Request access to sensitive datasets",
+                "name": "External Auth Data Access Workflow",
+                "description": "Request access to datasets via external auth workflow",
                 "category": "ACCESS",
                 "trigger": {
                     "type": "FORM_SUBMITTED",

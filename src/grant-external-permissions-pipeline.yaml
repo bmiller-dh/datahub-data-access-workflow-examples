@@ -13,7 +13,8 @@ filter:
         entityType: "actionRequest"
         parameters:
             actionRequestType: "WORKFLOW_FORM_REQUEST"
-            workflowId: "d4b1fee1-e3e3-44e4-90ce-f947f8f76594"
+            # Optional: uncomment to only receive approvals for this workflow (useful if you have one workflow).
+            # workflowId: "ba3dc137-eb40-45ed-b9a3-5ba2e2dcd2d1"
 
 options:
   failure_mode: "THROW"

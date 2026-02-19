@@ -12,7 +12,7 @@ This doc maps each requirement to what’s in this repo and how to run or extend
 ### What’s already built
 
 - **Create the workflow:** `scripts/data_access/create_data_access_workflow.py`  
-  Creates an ACCESS workflow with FORM_SUBMITTED trigger and APPROVAL step (e.g. “Dataset Access Request”). You already ran this and got a workflow URN.
+  Creates an ACCESS workflow with FORM_SUBMITTED trigger and APPROVAL step (e.g. “External Auth Data Access Workflow”). You already ran this and got a workflow URN.
 - **React to requests (Actions):** Pipelines that listen for `actionRequest` events with `actionRequestType: "WORKFLOW_FORM_REQUEST"` and `workflowId` set to your workflow URN:
   - `src/simple-pipeline.yaml` – log events
   - `src/create-external-access-request-pipeline.yaml` – send new requests to an external system
@@ -38,7 +38,7 @@ This doc maps each requirement to what’s in this repo and how to run or extend
 
 ### Optional: “Data Product” variant
 
-Use the same script and workflow; the workflow is already generic (e.g. “Dataset Access Request”). To have a separate “Data Product Access Request” workflow, duplicate the script and change `name` and `description` (and optionally `entityTypes` or form fields). The same pipelines and review script work for any workflow URN you create.
+Use the same script and workflow; the workflow is already generic (e.g. “External Auth Data Access Workflow”). To have a separate “Data Product Access Request” workflow, duplicate the script and change `name` and `description` (and optionally `entityTypes` or form fields). The same pipelines and review script work for any workflow URN you create.
 
 ---
 

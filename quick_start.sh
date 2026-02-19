@@ -29,7 +29,7 @@ if CREATE_OUTPUT=$(python scripts/data_access/create_data_access_workflow.py 2>&
     WORKFLOW_UUID="${BASH_REMATCH[1]}"
     PIPELINE_YAML="src/grant-external-permissions-pipeline.yaml"
     if [ -f "$PIPELINE_YAML" ]; then
-      sed "s/\(workflowId: \"\)[^\"]*/\1$WORKFLOW_UUID\"/" "$PIPELINE_YAML" > "$PIPELINE_YAML.tmp" && mv "$PIPELINE_YAML.tmp" "$PIPELINE_YAML"
+      sed "s/workflowId: \"[^\"]*\"/workflowId: \"$WORKFLOW_UUID\"/" "$PIPELINE_YAML" > "$PIPELINE_YAML.tmp" && mv "$PIPELINE_YAML.tmp" "$PIPELINE_YAML"
       echo "Updated $PIPELINE_YAML with workflowId: $WORKFLOW_UUID"
     fi
   fi
@@ -54,16 +54,27 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
-# Start mock server (Docker) if available
+# Start mock server: try Docker first, then Python if Docker unavailable or fails
 if command -v docker &>/dev/null; then
-  echo "Building and starting mock server..."
-  (cd mock-server && docker build -t grant-permissions-mock . -q)
+  echo "Building and starting mock server (Docker)..."
   docker stop grant-permissions-mock 2>/dev/null || true
-  docker run --rm -d -p 8000:8000 --name grant-permissions-mock --env-file .env grant-permissions-mock
-  MOCK_CONTAINER="grant-permissions-mock"
-  echo "Mock server: http://localhost:8000"
+  (cd mock-server && docker build -t grant-permissions-mock . -q) && docker run --rm -d -p 8000:8000 --name grant-permissions-mock --env-file .env grant-permissions-mock && MOCK_CONTAINER="grant-permissions-mock" || true
+fi
+if [ -z "$MOCK_CONTAINER" ]; then
+  echo "Starting mock server with Python..."
+  if [ -f mock-server/requirements.txt ]; then
+    (cd mock-server && pip install -r requirements.txt -q 2>/dev/null || true)
+  fi
+  (cd mock-server && python app.py) &
+  PIDS+=($!)
+  sleep 1
+  if kill -0 "${PIDS[-1]}" 2>/dev/null; then
+    echo "Mock server: http://localhost:8000"
+  else
+    echo "Warning: mock server may have failed to start. Run manually: cd mock-server && pip install -r requirements.txt && python app.py"
+  fi
 else
-  echo "Docker not found; skipping mock server. Start it manually from mock-server/ if needed."
+  echo "Mock server: http://localhost:8000"
 fi
 
 # Start all four pipelines in background
