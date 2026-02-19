@@ -1,7 +1,8 @@
 """
-Mock server for grant_permissions with a simple UI to list pending Data Access
-Requests and Approve/Deny them. Also receives POSTs from the grant-external-permissions
-DataHub action when requests are approved.
+External Authorization Service Simulator: mock server that receives grant_permissions
+POSTs from the grant-external-permissions DataHub action and provides a simple UI to
+list pending Data Access Requests and Approve/Deny them. Also receives POSTs from
+metadata-proposal, glossary-proposal, and certification-event pipelines.
 """
 import base64
 import json
@@ -196,7 +197,7 @@ def _dashboard_html():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Grant Permissions Mock – Data Access Requests</title>
+  <title>External Authorization Service Simulator – Data Access Requests</title>
   <style>
     * {{ box-sizing: border-box; }}
     body {{ font-family: system-ui, sans-serif; margin: 0; padding: 1rem 2rem; max-width: 900px; }}
@@ -218,7 +219,7 @@ def _dashboard_html():
   </style>
 </head>
 <body>
-  <h1>Grant Permissions Mock</h1>
+  <h1>External Authorization Service Simulator</h1>
   <p>
     <span class="badge {'ok' if config_ok else 'warn'}">
       {'DataHub configured' if config_ok else 'Set DATAHUB_URL and DATAHUB_TOKEN for Approve/Deny'}

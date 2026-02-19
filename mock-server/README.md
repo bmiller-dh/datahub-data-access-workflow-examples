@@ -1,9 +1,9 @@
 # Mock server (with UI)
 
-Flask server that:
+Flask server that simulates an external authorization service:
 
 1. **Receives POSTs** from DataHub action pipelines at configurable endpoints.
-2. **Web UI** at `http://localhost:8000/`: lists **pending Data Access Requests** (Approve/Deny) and **Recent approvals**, **Recent metadata proposals**, **Recent glossary proposals**, and **Recent certification events** when the corresponding pipelines are running and POST to this server. Glossary proposals are notifications only; approve or deny them in DataHub.
+2. **Web UI** at `http://localhost:8000/` (titled **External Authorization Service Simulator**): lists **pending Data Access Requests** (Approve/Deny) and **Recent approvals**, **Recent metadata proposals**, **Recent glossary proposals**, and **Recent certification events** when the corresponding pipelines are running and POST to this server. Glossary proposals are notifications only; approve or deny them in DataHub.
 
 For the UI to list and approve/deny requests, the server needs **DATAHUB_URL** and **DATAHUB_TOKEN** (same as the examples project). **Rebuild the Docker image** after pulling or changing mock-server code so the dashboard shows all sections.
 

@@ -145,7 +145,7 @@ To reject: use `--result REJECTED`.
 
 If the mock server is running, the pipeline will POST the approval payload to it.
 
-- **In the mock UI:** Open **http://localhost:8000/** and scroll to **“Recent approvals received (from pipeline)”** (auto-refreshes every 5 seconds). The dashboard also has sections for **Recent metadata proposals**, **Recent glossary proposals**, and **Recent certification events** when those pipelines are running and POST to the mock server.
+- **In the mock UI:** Open **http://localhost:8000/** (External Authorization Service Simulator) and scroll to **“Recent approvals received (from pipeline)”** (auto-refreshes every 5 seconds). The dashboard also has sections for **Recent metadata proposals**, **Recent glossary proposals**, and **Recent certification events** when those pipelines are running and POST to the mock server.
 - **In logs:** `docker logs grant-permissions-mock` — you should see a line like `POST /grant_permissions received` with `entityUrn`, `actorUrn`, `result: ACCEPTED`.
 
 ---
