@@ -1,5 +1,6 @@
 This repo contains examples for using [DataHub Data Access Workflows](https://docs.datahub.com/docs/managed-datahub/workflows/access-workflows) in conjunction with the [DataHub Actions Framework](https://docs.datahub.com/docs/actions) to integrate with external tools.
 
+- **[Configuration](#configuration)** – Requirements, env vars, and [Quick start](#quick-start-mock-server--all-four-pipelines) to run the mock server and all four pipelines.
 - **[Step-by-step guide](#step-by-step-data-access-request--approve--grant-eg-mock-server)** – Data Access Request → list pending → approve → grant pipeline → mock server (full flow).
 - **See [WORKFLOWS.md](WORKFLOWS.md)** for how to implement: (1) Data Product Access Requests, (2) Asset Certification, (3) Metadata Approval (Proposal Workflows), and (4) Glossary Approval using what’s built here.
 
@@ -38,6 +39,22 @@ Required variables:
 - **DATAHUB_URL** – DataHub instance URL (e.g. `https://<instance-name>.acryl.io`)
 - **DATAHUB_TOKEN** – [Personal Access Token](https://docs.datahub.com/docs/authentication/personal-access-tokens)
 
+## Quick start (mock server + all four pipelines)
+
+After [Configuration](#configuration) is set up (`pip install -e .`, `.env` with `DATAHUB_URL` and `DATAHUB_TOKEN`), you can start the mock server and all four action pipelines in one go:
+
+```sh
+./quick_start.sh
+```
+
+This script:
+
+- **Ensures the Data Access Workflow exists** and updates `workflowId` in `src/grant-external-permissions-pipeline.yaml` (runs `create_data_access_workflow.py`; idempotent).
+- Builds and runs the **mock server** in Docker at http://localhost:8000 (if Docker is installed).
+- Starts the **grant-external-permissions**, **certification-event**, **metadata-proposal**, and **glossary-proposal** pipelines in the background.
+
+Press **Ctrl+C** to stop all pipelines and the mock server. If the workflow step fails (e.g. no network), run [Step 2](#step-2--create-the-data-access-workflow-once-per-instance) manually and set `workflowId` in the pipeline YAML.
+
 ---
 
 # Step-by-step: Data Access Request → Approve → Grant (e.g. mock server)
@@ -58,6 +75,8 @@ cp .env.example .env
 ```
 
 ### Step 2 – Create the Data Access Workflow (once per instance)
+
+**Optional if you use [Quick start](#quick-start-mock-server--all-four-pipelines):** the quick start script runs this and updates the pipeline YAML for you.
 
 ```sh
 # From datahub-data-access-workflow-examples with venv activated and .env set

@@ -22,6 +22,10 @@ This doc maps each requirement to what’s in this repo and how to run or extend
 
 ### How to run / demo
 
+**Quick path:** From the repo root, run `./quick_start.sh` to create/update the workflow, set `workflowId` in the grant pipeline, start the mock server, and run all four pipelines (see [README – Quick start](README.md#quick-start-mock-server--all-four-pipelines)).
+
+**Manual steps:**
+
 1. Ensure `DATAHUB_URL` and `DATAHUB_TOKEN` are set (e.g. from `.env`).
 2. Create the workflow (if not already done):  
    `python scripts/data_access/create_data_access_workflow.py`
