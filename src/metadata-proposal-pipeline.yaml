@@ -10,12 +10,12 @@ datahub:
 source:
   type: "datahub-cloud"
 
+# Listen for actionRequest lifecycle events (CREATE = proposal created; we log all to debug)
 filter:
   event_type: "EntityChangeEvent_v1"
   event:
     entityType: "actionRequest"
     category: "LIFECYCLE"
-    operation: "CREATE"
 
 options:
   failure_mode: "THROW"

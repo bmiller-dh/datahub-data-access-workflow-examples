@@ -9,12 +9,9 @@ datahub:
 source:
   type: "datahub-cloud"
 
+# Accept all entity change events so we can see what DataHub sends for glossary proposals
 filter:
   event_type: "EntityChangeEvent_v1"
-  event:
-    entityType: "actionRequest"
-    category: "LIFECYCLE"
-    operation: "CREATE"
 
 options:
   failure_mode: "THROW"

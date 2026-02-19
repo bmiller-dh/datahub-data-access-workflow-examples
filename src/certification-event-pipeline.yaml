@@ -20,4 +20,4 @@ options:
 action:
   type: certification_event_action
   config:
-    # optional: external_uri: "http://localhost:8000/certification_events"
+    external_uri: "http://localhost:8000/certification_events"

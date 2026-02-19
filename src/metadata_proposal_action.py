@@ -47,20 +47,35 @@ class MetadataProposalAction(Action):
             if not isinstance(event.event, EntityChangeEvent):
                 return
             ev = event.event
-            if ev.operation != "CREATE" or ev.entityType != "actionRequest":
+            # Debug: log every actionRequest event to see what DataHub sends
+            entity_type = getattr(ev, "entityType", None) or getattr(ev, "entity_type", None)
+            if entity_type == "actionRequest":
+                operation = getattr(ev, "operation", None)
+                category = getattr(ev, "category", None)
+                params = ev.safe_parameters or {}
+                action_request_type = params.get("actionRequestType") or params.get("actionRequestType") or ""
+                print(
+                    f"[MetadataProposalAction] actionRequest event: operation={operation!r} category={category!r} actionRequestType={action_request_type!r}",
+                    flush=True,
+                )
+            op = getattr(ev, "operation", None)
+            if op not in ("CREATE", "CREATED") or getattr(ev, "entityType", getattr(ev, "entity_type", None)) != "actionRequest":
                 return
             params = ev.safe_parameters or {}
-            action_type = params.get("actionRequestType") or ""
+            action_type = (params.get("actionRequestType") or "").strip()
             if action_type not in METADATA_PROPOSAL_TYPES:
+                print(f"[MetadataProposalAction] Skipping: actionRequestType {action_type!r} not in {sorted(METADATA_PROPOSAL_TYPES)}", flush=True)
                 return
-
+            entity_urn = getattr(ev, "entityUrn", None) or getattr(ev, "entity_urn", None) or ""
+            stamp = getattr(ev, "auditStamp", None) or getattr(ev, "audit_stamp", None)
+            actor = getattr(stamp, "actor", None) if stamp else None
             payload = {
                 "eventType": "metadata_proposal",
                 "actionRequestType": action_type,
-                "entityUrn": ev.entity_urn,
-                "requestUrn": ev.entity_urn,
+                "entityUrn": entity_urn,
+                "requestUrn": entity_urn,
                 "parameters": params,
-                "actor": getattr(ev.audit_stamp, "actor", None) if ev.audit_stamp else None,
+                "actor": actor,
             }
             message = json.dumps(payload, indent=2)
             print("[MetadataProposalAction] Metadata proposal:", message)

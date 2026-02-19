@@ -1,4 +1,4 @@
-name: simple-pipeline
+name: grant-external-permissions-pipeline
 
 datahub:
   server: "${DATAHUB_URL}"

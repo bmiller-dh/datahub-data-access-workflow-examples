@@ -50,7 +50,7 @@ class CertificationEventAction(Action):
                 "operation": ev.operation,
                 "modifier": getattr(ev, "modifier", None),
                 "parameters": params,
-                "actor": getattr(ev.audit_stamp, "actor", None) if ev.audit_stamp else None,
+                "actor": (lambda s: getattr(s, "actor", None) if s else None)(getattr(ev, "auditStamp", None) or getattr(ev, "audit_stamp", None)),
             }
             message = json.dumps(payload, indent=2)
             print("[CertificationEventAction] Structured property change:", message)

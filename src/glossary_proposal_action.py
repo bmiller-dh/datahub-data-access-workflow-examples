@@ -23,6 +23,16 @@ GLOSSARY_PROPOSAL_TYPES = frozenset({
 })
 
 
+def _is_glossary_proposal(action_request_type: str) -> bool:
+    """Accept known types or any type that looks glossary/term-related."""
+    if not action_request_type:
+        return False
+    if action_request_type in GLOSSARY_PROPOSAL_TYPES:
+        return True
+    upper = action_request_type.upper()
+    return "TERM" in upper or "GLOSSARY" in upper
+
+
 class GlossaryProposalActionConfig(ConfigModel):
     external_uri: Optional[str] = None
 
@@ -43,29 +53,61 @@ class GlossaryProposalAction(Action):
             if not isinstance(event.event, EntityChangeEvent):
                 return
             ev = event.event
-            if ev.operation != "CREATE" or ev.entityType != "actionRequest":
+            entity_type = getattr(ev, "entityType", None) or getattr(ev, "entity_type", None)
+            op = getattr(ev, "operation", None)
+            category = getattr(ev, "category", None)
+            # Log every entity change so we can see what DataHub sends (e.g. for glossary term proposals)
+            print(
+                f"[GlossaryProposalAction] event: entityType={entity_type!r} category={category!r} operation={op!r}",
+                flush=True,
+            )
+            if entity_type == "actionRequest":
+                op = getattr(ev, "operation", None)
+                category = getattr(ev, "category", None)
+                params = ev.safe_parameters or {}
+                action_type = (params.get("actionRequestType") or "").strip()
+                print(
+                    f"[GlossaryProposalAction] actionRequest event: operation={op!r} category={category!r} actionRequestType={action_type!r} param_keys={list(params.keys())!r}",
+                    flush=True,
+                )
+            if entity_type != "actionRequest":
                 return
             params = ev.safe_parameters or {}
-            action_type = params.get("actionRequestType") or ""
-            if action_type not in GLOSSARY_PROPOSAL_TYPES:
+            action_type = (params.get("actionRequestType") or "").strip()
+            # If type is empty (DataHub sometimes omits it for glossary), still forward
+            if action_type and not _is_glossary_proposal(action_type):
+                print(f"[GlossaryProposalAction] Skipping: actionRequestType {action_type!r} not glossary/term-related", flush=True)
                 return
-
+            if not action_type:
+                action_type = "GLOSSARY_PROPOSAL"
+            entity_urn = getattr(ev, "entityUrn", None) or getattr(ev, "entity_urn", None) or ""
+            entity_urn = str(entity_urn) if entity_urn is not None else ""
+            stamp = getattr(ev, "auditStamp", None) or getattr(ev, "audit_stamp", None)
+            actor = getattr(stamp, "actor", None) if stamp else None
+            actor = str(actor) if actor is not None else None
+            # Ensure parameters are JSON-serializable (params can contain non-serializable types)
+            try:
+                safe_params = json.loads(json.dumps(params, default=str))
+            except Exception:
+                safe_params = {k: str(v) for k, v in (params or {}).items()}
             payload = {
                 "eventType": "glossary_proposal",
                 "actionRequestType": action_type,
-                "entityUrn": ev.entity_urn,
-                "requestUrn": ev.entity_urn,
-                "parameters": params,
-                "actor": getattr(ev.audit_stamp, "actor", None) if ev.audit_stamp else None,
+                "entityUrn": entity_urn,
+                "requestUrn": entity_urn,
+                "parameters": safe_params,
+                "actor": actor,
             }
-            message = json.dumps(payload, indent=2)
-            print("[GlossaryProposalAction] Glossary proposal:", message)
-
+            print("[GlossaryProposalAction] Glossary proposal (forwarding):", entity_urn[:80] if entity_urn else "(no urn)", flush=True)
             if self.config.external_uri:
+                print("[GlossaryProposalAction] POST to", self.config.external_uri, flush=True)
                 resp = requests.post(self.config.external_uri, json=payload, timeout=30)
                 resp.raise_for_status()
-                print("[GlossaryProposalAction] Forwarded to external system:", resp.status_code)
+                print("[GlossaryProposalAction] Forwarded to external system:", resp.status_code, flush=True)
+            else:
+                print("[GlossaryProposalAction] No external_uri configured, skipping POST", flush=True)
         except Exception as e:
+            print("[GlossaryProposalAction] ERROR:", e, flush=True)
             traceback.print_exc()
             os._exit(1)
 
