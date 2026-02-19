@@ -80,7 +80,7 @@ Use the same script and workflow; the workflow is already generic (e.g. “Datas
 
 ### What’s in this repo
 
-- **`src/metadata-proposal-pipeline.yaml`** – Listens for new **metadata** proposals (same filter: `actionRequest` + `LIFECYCLE` + `CREATE`). Uses **`metadata_proposal_action`**, which only handles TAG_ASSOCIATION, OWNER_ASSOCIATION, DOMAIN_ASSOCIATION, UPDATE_DESCRIPTION, STRUCTURED_PROPERTY_ASSOCIATION. Logs each event and optionally POSTs to `config.external_uri` (e.g. ticketing or approval API).
+- **`src/metadata-proposal-pipeline.yaml`** – Listens for **actionRequest** lifecycle events (filter relaxed so CREATE and other operations are received). Uses **`metadata_proposal_action`**, which handles TAG_ASSOCIATION, OWNER_ASSOCIATION, DOMAIN_ASSOCIATION, UPDATE_DESCRIPTION, STRUCTURED_PROPERTY_ASSOCIATION. Logs each event and POSTs to `config.external_uri` when set (e.g. `http://localhost:8000/metadata_proposals` for the mock dashboard).
 
 ### How to run
 
@@ -110,14 +110,17 @@ Use the same script and workflow; the workflow is already generic (e.g. “Datas
 
 ### What’s in this repo
 
-- **`src/glossary-proposal-pipeline.yaml`** – Listens for new proposals (same event filter as metadata). Uses **`glossary_proposal_action`**, which only handles CREATE_GLOSSARY_TERM and TERM_ASSOCIATION. Logs each event and optionally POSTs to `config.external_uri`.
+- **`src/glossary-proposal-pipeline.yaml`** – Listens for **actionRequest** lifecycle events. Uses **`glossary_proposal_action`**, which forwards events whose `actionRequestType` is glossary/term-related (CREATE_GLOSSARY_TERM, TERM_ASSOCIATION, or any type containing "TERM"/"GLOSSARY"); if DataHub sends an empty `actionRequestType`, it is treated as a glossary proposal. **All operations** (PENDING, COMPLETED, CREATE, etc.) are forwarded so proposals appear on the mock dashboard at every stage. Logs each event and POSTs to `config.external_uri` when set (e.g. `http://localhost:8000/glossary_proposals`).
 
 ### How to run
 
 1. Set `DATAHUB_URL` and `DATAHUB_TOKEN`.
-2. Run:  
+2. If you use the global `datahub` CLI (pipx), inject this repo so the custom action is found:  
+   `pipx inject acryl-datahub /path/to/datahub-data-access-workflow-examples`  
+   (After changing action code, run `pipx inject --force acryl-datahub /path/to/...` and restart the pipeline.)
+3. Run:  
    `datahub actions -c src/glossary-proposal-pipeline.yaml`
-3. Propose a glossary term (or term association) in the UI; the action will log it and, if `external_uri` is set, forward it.
+4. Propose a glossary term (or term association) in the UI; the action will forward it to the mock server (or your `external_uri`) and it will appear under **Recent glossary proposals** on the dashboard.
 
 ---
 

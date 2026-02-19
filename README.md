@@ -34,7 +34,7 @@ Note the workflow URN printed (e.g. `urn:li:actionWorkflow:xxxxxxxx-xxxx-...`). 
 
 ### Step 3 – (Optional) Run the mock server (with UI)
 
-To simulate an external system that receives approved requests and to use a **web UI** to Approve/Deny requests:
+To simulate an external system that receives approved requests and to use a **web UI** to Approve/Deny requests (and to see metadata/glossary/certification events when those pipelines run):
 
 ```sh
 cd mock-server
@@ -44,7 +44,7 @@ docker run --rm -d -p 8000:8000 --name grant-permissions-mock --env-file ../.env
 # Check: curl http://localhost:8000/health
 ```
 
-The pipeline is configured to POST to `http://localhost:8000/grant_permissions` when a request is approved. With `--env-file ../.env`, the mock server can list pending requests and call DataHub’s review API when you click Approve or Deny in the UI. **See [mock-server/README.md](mock-server/README.md#how-to-test-end-to-end) for a full test procedure.**
+**Rebuild the image** (`docker build -t grant-permissions-mock .`) after pulling or changing mock-server code so the dashboard shows all sections (approvals, metadata proposals, glossary proposals, certification events). The pipeline is configured to POST to `http://localhost:8000/grant_permissions` when a request is approved. With `--env-file ../.env`, the mock server can list pending requests and call DataHub’s review API when you click Approve or Deny in the UI. **See [mock-server/README.md](mock-server/README.md#how-to-test-end-to-end) for a full test procedure.**
 
 ### Step 4 – Start the grant-external-permissions pipeline
 
@@ -90,14 +90,20 @@ To reject: use `--result REJECTED`.
 
 If the mock server is running, the pipeline will POST the approval payload to it.
 
-- **In the mock UI:** Open **http://localhost:8000/** and check the **“Recent approvals received (from pipeline)”** section at the bottom (auto-refreshes every 5 seconds).
+- **In the mock UI:** Open **http://localhost:8000/** and scroll to **“Recent approvals received (from pipeline)”** (auto-refreshes every 5 seconds). The dashboard also has sections for **Recent metadata proposals**, **Recent glossary proposals**, and **Recent certification events** when those pipelines are running and POST to the mock server.
 - **In logs:** `docker logs grant-permissions-mock` — you should see a line like `POST /grant_permissions received` with `entityUrn`, `actorUrn`, `result: ACCEPTED`.
 
 ---
 
 # How to run the other workflows (2, 3, 4)
 
-Use the same setup: from `datahub-data-access-workflow-examples`, activate the venv and load `.env`, then run the pipeline. Each pipeline logs matching events; you can set `external_uri` in the pipeline config to POST to your own service.
+Use the same setup: from `datahub-data-access-workflow-examples`, activate the venv and load `.env`, then run the pipeline. Each pipeline logs matching events; you can set `external_uri` in the pipeline config to POST to your own service (or to the mock server at `http://localhost:8000/...` so events appear on the dashboard).
+
+**If you use the global `datahub` CLI (e.g. installed via pipx):** the custom actions (metadata_proposal_action, glossary_proposal_action, certification_event_action) live in this repo. Run once:  
+`pipx inject acryl-datahub /path/to/datahub-data-access-workflow-examples`  
+so the CLI can load them. After you change action code, run  
+`pipx inject --force acryl-datahub /path/to/datahub-data-access-workflow-examples`  
+and restart the pipeline so it uses the latest code.
 
 ### 2. Asset Certification
 
@@ -117,6 +123,7 @@ Create a structured property in DataHub first (Govern → Settings → Structure
 
 ```sh
 python scripts/certification/create_asset_certification_form.py --form-id asset-cert-2024 --property-urn "urn:li:structuredProperty:yourCertPropertyUrn"
+# Or pass just the property id: --property-urn "yourCertPropertyUrn"
 ```
 
 **How to trigger:** In DataHub, add or change a structured property on a dataset (e.g. via a Compliance Form or the asset profile). The pipeline will log the event.
