@@ -14,7 +14,7 @@ filter:
         parameters:
             actionRequestType: "WORKFLOW_FORM_REQUEST"
             # Optional: uncomment to only receive approvals for this workflow (useful if you have one workflow).
-            # workflowId: "ba3dc137-eb40-45ed-b9a3-5ba2e2dcd2d1"
+            # workflowId: "35bbf9be-19bc-4e6e-8f7c-d536c472f23b"
 
 options:
   failure_mode: "THROW"
